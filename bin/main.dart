@@ -1,6 +1,7 @@
-import 'package:dart_space_adventure/dart_space_adventure.dart'
-    as space_adventure;
+import 'package:dart_space_adventure/dart_space_adventure.dart';
 
 void main() {
-  space_adventure.startSpaceAdventure();
+  SpaceAdventure(
+    planetarySystem: PlanetarySystem(name: "Solar System"),
+  ).start();
 }
