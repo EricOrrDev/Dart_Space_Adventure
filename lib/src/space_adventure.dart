@@ -1,10 +1,14 @@
 import 'dart:io';
+import 'dart:math';
+
+import 'planet.dart';
 import 'planetary_system.dart';
 
 class SpaceAdventure {
   static SpaceAdventure? _instance;
-  late PlanetarySystem planetarySystem;
+  late final PlanetarySystem planetarySystem;
 
+  //credit to chatGPT for showing me how to make a singleton in dart
   factory SpaceAdventure({required PlanetarySystem planetarySystem}) {
     _instance ??= SpaceAdventure._internal();
     _instance!.planetarySystem = planetarySystem;
@@ -17,16 +21,20 @@ class SpaceAdventure {
     printGreeting();
     printIntroduction(responseToPrompt("What is your name?"));
     print('Lets go on an adventure!');
-    travel(
-      promptForRandomOrSpecificDestination(
-        'Shall I randomly choose a planet for you to visit? (Y or N)',
-      ),
-    );
+    if (planetarySystem.hasPlanets) {
+      travel(
+        promptForRandomOrSpecificDestination(
+          'Shall I randomly choose a planet for you to visit? (Y or N)',
+        ),
+      );
+    } else {
+      print('Darn, no planets here.');
+    }
   }
 
   void printGreeting() {
     print('Welcome to the ${planetarySystem.name}');
-    print('There are 8 planets to explore');
+    print('There are ${planetarySystem.numberOfPlanets} planets to explore');
   }
 
   void printIntroduction(String name) {
@@ -36,44 +44,61 @@ class SpaceAdventure {
   }
 
   String responseToPrompt(String prompt) {
-    print(prompt);
-    return stdin.readLineSync() ?? '';
-  }
+    while (true) {
+      print(prompt);
 
-  void travelToRandomPlanet(String planetName) {
-    print(
-      'Ok! Traveling to $planetName...\n'
-      'Arrived at $planetName! ',
-    );
-  }
+      final input = stdin.readLineSync();
 
-  void travelTo(String planetName) {
-    print(
-      'Traveling to $planetName...\n'
-      'Arrived at $planetName!',
-    );
+      if (input == null) {
+        print('Please enter your name.');
+        continue;
+      }
+      final trimmed = input.trim();
+
+      if (trimmed.isEmpty) {
+        print('Input cannot be empty.');
+        continue;
+      }
+      return trimmed;
+    }
   }
 
   void travel(bool randomDestination) {
+    Planet planet;
     if (randomDestination) {
-      travelToRandomPlanet("any");
+      planet = planetarySystem.randomPlanet();
     } else {
-      travelTo(responseToPrompt('Name the planet you would like to visit'));
+      planet = planetarySystem.planetWithName(
+        responseToPrompt('Name the planet you would like to visit'),
+      );
     }
+    travelTo(planet);
+  }
+
+  void travelTo(Planet planet) {
+    print('Traveling to ${planet.name}');
+    print('Arrived at ${planet.name}. ${planet.description}');
   }
 
   bool promptForRandomOrSpecificDestination(String prompt) {
-    String? answer;
-    while (answer != 'Y' && answer != 'N') {
-      answer = responseToPrompt(prompt);
-      if (answer == 'Y') {
-        return true;
-      } else if (answer == 'N') {
-        return false;
-      } else {
-        print('Sorry I didn\'t get that');
+    var yesAnswers = {'y', 'yes'};
+    var noAnswers = {'n', 'no'};
+    //I decided I didn't know Yong's prompt loop
+    while (true) {
+      final answer = responseToPrompt(prompt)?.trim().toLowerCase();
+
+      if (answer == null || answer.isEmpty) {
+        print("Please enter yes or no");
+        continue;
       }
+      if (yesAnswers.contains(answer)) {
+        return true;
+      }
+      if (noAnswers.contains(answer)) {
+        return false;
+      }
+
+      print("Sorry I didn\'t get that");
     }
-    return false;
   }
 }
